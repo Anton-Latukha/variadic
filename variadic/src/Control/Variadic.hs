@@ -16,6 +16,7 @@ import Control.Monad.Reader (ReaderT(ReaderT))
 import Control.Variadic.Varargs (Varargs(Cons, Nil))
 import Data.Functor (void)
 
+-- * Converting functions to&from variadic
 
 -- | Converts a function of arbitrary arity to 'Variadic'.
 class ToVariadic x where
@@ -51,6 +52,8 @@ instance (FromVariadic args a) => FromVariadic (arg ': args) a where
     fromVariadic $ Variadic \args ->
       runVariadic v (arg `Cons` args)
 
+-- ** Utilitary
+
 -- | A function whose argument list is collapsed into 'Varargs'
 -- and shows its return type.
 newtype Variadic args a = Variadic
@@ -71,6 +74,9 @@ type family ToVariadicReturn x :: * where
 type family FromVariadicSignature (args :: [*]) (r :: *) :: * where
   FromVariadicSignature '[] r = r
   FromVariadicSignature (arg ': args) r = arg -> FromVariadicSignature args r
+
+
+-- * Variadic transformer (@VariadicT@)
 
 -- | Same as 'Variadic' but captures the higher-kinded type parameter in the
 -- return type. Useful so we can use 'Monad' and friends with 'Variadic'
@@ -96,6 +102,9 @@ fromVariadicT
   => VariadicT args m r -> FromVariadicSignature args (m r)
 fromVariadicT = fromVariadic . unVariadicT
 
+
+-- ** Utilitary
+
 -- | Convenience constraint enabling variadic.
 --
 -- @x@ is the Haskell function type,
@@ -118,6 +127,8 @@ type IsVariadic x args r =
   , x ~ FromVariadicSignature args r
   , FromVariadic args r
   )
+
+-- ** Methods for @VariadicT@
 
 -- | Analogous to 'fmap' for 'VariadicT' but works on vanilla functions.
 vmap
